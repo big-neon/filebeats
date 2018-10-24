@@ -1,0 +1,35 @@
+version: '2'
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VER}
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+      discovery.type: "single-node"
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${ES_VER}
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+
+  filebeat:
+    hostname: filebeat
+    image: bigneon/filebeat:latest
+    build:
+      context: .
+    volumes:
+       # needed to persist filebeat tracking data :
+     - "filebeat_data:/usr/share/filebeat/data:rw"
+       # needed to access all docker logs (read only) :
+     - "/var/lib/docker/containers:/usr/share/dockerlogs/data:ro"
+       # needed to access additional informations about containers
+     - "/var/run/docker.sock:/var/run/docker.sock"
+
+volumes:
+# create a persistent volume for Filebeat
+  filebeat_data:
